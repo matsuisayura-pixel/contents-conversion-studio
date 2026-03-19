@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>コンテンツ変換スタジオ | 秋田式メソッド</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:    #0f172a;
+      --bg-secondary:  #1e293b;
+      --bg-card:       #1a2740;
+      --bg-input:      #0d1a2d;
+      --accent-gold:   #f59e0b;
+      --accent-hover:  #fbbf24;
+      --accent-muted:  rgba(245,158,11,0.15);
+      --text-primary:  #f1f5f9;
+      --text-secondary:#94a3b8;
+      --text-muted:    #64748b;
+      --border:        #2d3f5e;
+      --border-focus:  #f59e0b;
+      --success:       #10b981;
+      --error:         #ef4444;
+      --radius:        12px;
+      --radius-sm:     8px;
+      --shadow:        0 4px 24px rgba(0,0,0,0.4);
+      --transition:    0.2s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.7;
+    }
+
+    /* ─── Header ─── */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1a2740 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(245,158,11,0.3);
+      flex-shrink: 0;
+    }
+    .logo-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+    }
+    .logo-text p {
+      font-size: 0.7rem;
+      color: var(--accent-gold);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .badge {
+      font-size: 0.65rem;
+      padding: 3px 10px;
+      background: var(--accent-muted);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 20px;
+      color: var(--accent-gold);
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── Main ─── */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ─── Section card ─── */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 3px; height: 14px;
+      background: var(--accent-gold);
+      border-radius: 2px;
+    }
+
+    /* ─── API Key section ─── */
+    .api-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      gap: 12px;
+    }
+    .api-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lock-icon {
+      font-size: 18px;
+      color: var(--accent-gold);
+    }
+    .api-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .api-status {
+      font-size: 0.72rem;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .api-status.saved {
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: var(--success);
+    }
+    .api-status.not-saved {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      color: var(--error);
+    }
+    .collapse-btn {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background var(--transition);
+    }
+    .collapse-btn:hover { background: var(--bg-secondary); }
+    .api-body { margin-top: 16px; }
+    .api-body.hidden { display: none; }
+    .input-group { display: flex; gap: 10px; align-items: flex-start; }
+    .api-input-wrap { position: relative; flex: 1; }
+
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 40px 10px 14px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: 'Courier New', monospace;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+    }
+    .toggle-vis {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 16px;
+      padding: 2px;
+      transition: color var(--transition);
+    }
+    .toggle-vis:hover { color: var(--text-secondary); }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      color: #0f172a;
+    }
+    .btn-gold:hover {
+      background: linear-gradient(135deg, var(--accent-hover), var(--accent-gold));
+      box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+      transform: translateY(-1px);
+    }
+    .btn-gold:active { transform: translateY(0); }
+    .btn-ghost {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+    }
+    .btn-danger {
+      background: rgba(239,68,68,0.1);
+      color: var(--error);
+      border: 1px solid rgba(239,68,68,0.25);
+    }
+    .btn-danger:hover {
+      background: rgba(239,68,68,0.2);
+      box-shadow: 0 2px 8px rgba(239,68,68,0.2);
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ─── Content input ─── */
+    .char-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .char-count {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .char-count.warn { color: var(--accent-gold); }
+    .char-count.over { color: var(--error); }
+
+    textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 200px;
+      line-height: 1.7;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+    textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+    }
+    textarea::placeholder { color: var(--text-muted); }
+
+    /* ─── Format cards ─── */
+    .format-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .format-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: all var(--transition);
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .format-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(245,158,11,0.04), transparent);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .format-card:hover {
+      border-color: rgba(245,158,11,0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .format-card:hover::before { opacity: 1; }
+    .format-card.selected {
+      border-color: var(--accent-gold);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 1px var(--accent-gold), 0 4px 20px rgba(245,158,11,0.2);
+    }
+    .format-card.selected::before { opacity: 1; }
+    .format-icon { font-size: 26px; margin-bottom: 8px; display: block; }
+    .format-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .format-desc { font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; }
+    .format-check {
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 18px; height: 18px;
+      background: var(--accent-gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      color: #0f172a;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .format-card.selected .format-check { opacity: 1; }
+
+    /* ─── Options ─── */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .option-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+    .option-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .opt-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-muted);
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+    .opt-btn:hover {
+      border-color: rgba(245,158,11,0.4);
+      color: var(--text-secondary);
+    }
+    .opt-btn.active {
+      background: var(--accent-muted);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+    }
+
+    /* ─── Convert button ─── */
+    .convert-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-convert {
+      width: 100%;
+      max-width: 400px;
+      justify-content: center;
+      padding: 16px 32px;
+      font-size: 1.05rem;
+      border-radius: 50px;
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      color: #0f172a;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      box-shadow: 0 4px 24px rgba(245,158,11,0.3);
+    }
+    .btn-convert:hover:not(:disabled) {
+      box-shadow: 0 6px 32px rgba(245,158,11,0.5);
+      transform: translateY(-2px);
+    }
+    .security-note {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 500px;
+    }
+
+    /* ─── Spinner ─── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(15,23,42,0.3);
+      border-top-color: #0f172a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Output area ─── */
+    .output-section { display: none; }
+    .output-section.visible { display: block; }
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .output-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .output-content {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      min-height: 200px;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    /* Markdown rendered output */
+    .output-content.rendered h1,
+    .output-content.rendered h2,
+    .output-content.rendered h3 {
+      color: var(--accent-gold);
+      margin: 1.2em 0 0.6em;
+      font-weight: 700;
+    }
+    .output-content.rendered h1 { font-size: 1.3rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .output-content.rendered h2 { font-size: 1.1rem; }
+    .output-content.rendered h3 { font-size: 0.95rem; }
+    .output-content.rendered ul,
+    .output-content.rendered ol { padding-left: 1.5em; margin: 0.5em 0; }
+    .output-content.rendered li { margin: 0.25em 0; }
+    .output-content.rendered strong { color: var(--accent-hover); }
+    .output-content.rendered em { color: var(--text-secondary); }
+    .output-content.rendered p { margin: 0.6em 0; }
+    .output-content.rendered hr { border: none; border-top: 1px solid var(--border); margin: 1em 0; }
+    .output-content.rendered code {
+      background: rgba(245,158,11,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--accent-gold);
+    }
+    .output-content.rendered pre {
+      background: var(--bg-secondary);
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      margin: 0.8em 0;
+    }
+    .output-content.rendered pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-primary);
+    }
+    .usage-info {
+      margin-top: 10px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    /* ─── Error ─── */
+    .error-box {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      color: #fca5a5;
+      font-size: 0.85rem;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .error-box::before { content: '⚠️'; flex-shrink: 0; }
+
+    /* ─── Toast ─── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--bg-card);
+      border: 1px solid var(--success);
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      color: var(--success);
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ─── Divider ─── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 600px) {
+      header { padding: 14px 16px; }
+      main { padding: 20px 14px 60px; gap: 20px; }
+      .section-card { padding: 18px 16px; }
+      .format-grid { grid-template-columns: repeat(2, 1fr); }
+      .options-grid { grid-template-columns: 1fr; gap: 14px; }
+      .input-group { flex-direction: column; }
+      .output-header { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* ─── Footer ─── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+    footer span { color: var(--accent-gold); }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header>
+  <div class="header-inner">
+    <div class="logo-area">
+      <div class="logo-icon">✦</div>
+      <div class="logo-text">
+        <h1>コンテンツ変換スタジオ</h1>
+        <p>秋田式メソッド / peace-method</p>
+      </div>
+    </div>
+    <span class="badge">AI Powered</span>
+  </div>
+</header>
+
+<!-- ─── Main ─── -->
+<main>
+
+  <!-- ① APIキー -->
+  <div class="section-card" id="apiSection">
+    <div class="api-header" id="apiToggle" title="クリックで開閉">
+      <div class="api-header-left">
+        <span class="lock-icon">🔐</span>
+        <h2>APIキー設定</h2>
+        <span class="api-status not-saved" id="apiStatus">未設定</span>
+      </div>
+      <button class="collapse-btn" id="collapseBtn">▲ 閉じる</button>
+    </div>
+
+    <div class="api-body" id="apiBody">
+      <div class="divider" style="margin-bottom:14px;"></div>
+      <div class="input-group">
+        <div class="api-input-wrap">
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false" />
+          <button class="toggle-vis" id="toggleVis" title="表示/非表示">👁</button>
+        </div>
+        <button class="btn btn-gold" id="saveApiBtn">保存</button>
+        <button class="btn btn-danger" id="clearApiBtn" style="display:none;">削除</button>
+      </div>
+      <p style="margin-top:10px; font-size:0.7rem; color:var(--text-muted);">
+        ※ APIキーはお使いのブラウザ（localStorage）にのみ保存されます。サーバーには送信されません。<br>
+        ※ セキュリティのためローカル環境（localhost）でのご利用を推奨します。
+      </p>
+    </div>
+  </div>
+
+  <!-- ② コンテンツ入力 -->
+  <div class="section-card">
+    <div class="section-title">コンテンツ入力</div>
+    <div class="char-info">
+      <p style="font-size:0.78rem; color:var(--text-secondary);">変換したい元コンテンツを貼り付けてください</p>
+      <span class="char-count" id="charCount">0 文字</span>
+    </div>
+    <textarea
+      id="contentInput"
+      placeholder="例）動画の台本、ブログ記事、セミナー資料のテキスト、メモなどを貼り付けてください。&#10;&#10;AIが選択したフォーマットに最適化して変換します。"
+      rows="10"
+    ></textarea>
+  </div>
+
+  <!-- ③ 変換フォーマット選択 -->
+  <div class="section-card">
+    <div class="section-title">変換フォーマット選択</div>
+    <div class="format-grid">
+      <div class="format-card" data-format="video">
+        <span class="format-icon">📹</span>
+        <div class="format-name">動画スクリプト</div>
+        <div class="format-desc">YouTube・セミナー動画用の台本</div>
+        <div class="format-check">✓</div>
+      </div>
+      <div class="format-card" data-format="audio">
+        <span class="format-icon">🎙️</span>
+        <div class="format-name">音声原稿</div>
+        <div class="format-desc">ポッドキャスト・音声コンテンツ用</div>
+        <div class="format-check">✓</div>
+      </div>
+      <div class="format-card" data-format="pdf">
+        <span class="format-icon">📄</span>
+        <div class="format-name">PDF資料</div>
+        <div class="format-desc">レポート・テキスト・教材用</div>
+        <div class="format-check">✓</div>
+      </div>
+      <div class="format-card" data-format="sns">
+        <span class="format-icon">📱</span>
+        <div class="format-name">SNS投稿</div>
+        <div class="format-desc">Twitter・Instagram・LINE用</div>
+        <div class="format-check">✓</div>
+      </div>
+      <div class="format-card" data-format="email">
+        <span class="format-icon">📧</span>
+        <div class="format-name">メール文</div>
+        <div class="format-desc">ステップメール・セールスメール用</div>
+        <div class="format-check">✓</div>
+      </div>
+      <div class="format-card" data-format="seminar">
+        <span class="format-icon">🎓</span>
+        <div class="format-name">セミナースライド構成</div>
+        <div class="format-desc">プレゼン・スライド設計用</div>
+        <div class="format-check">✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ オプション -->
+  <div class="section-card">
+    <div class="section-title">オプション設定</div>
+    <div class="options-grid">
+      <div class="option-group">
+        <label>文体・トーン</label>
+        <div class="option-btns" id="toneBtns">
+          <button class="opt-btn active" data-tone="professional">プロフェッショナル</button>
+          <button class="opt-btn" data-tone="casual">カジュアル</button>
+          <button class="opt-btn" data-tone="educational">教育的</button>
+        </div>
+      </div>
+      <div class="option-group">
+        <label>出力の長さ</label>
+        <div class="option-btns" id="lengthBtns">
+          <button class="opt-btn" data-length="short">短め</button>
+          <button class="opt-btn active" data-length="medium">標準</button>
+          <button class="opt-btn" data-length="long">詳細</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 変換ボタン -->
+  <div class="convert-section">
+    <button class="btn btn-gold btn-convert" id="convertBtn">
+      <span id="convertBtnText">✦ コンテンツを変換する</span>
+    </button>
+    <p class="security-note">
+      ※ 変換処理はローカルサーバー（localhost:3000）経由でClaude AIに接続します<br>
+      ※ コンテンツやAPIキーが外部に保存されることはありません
+    </p>
+  </div>
+
+  <!-- エラー表示 -->
+  <div class="error-box" id="errorBox" style="display:none;"></div>
+
+  <!-- ⑥ 出力エリア -->
+  <div class="section-card output-section" id="outputSection">
+    <div class="output-header">
+      <div class="section-title" style="margin-bottom:0;">変換結果</div>
+      <div class="output-actions">
+        <button class="btn btn-ghost" id="copyBtn">📋 コピー</button>
+        <button class="btn btn-gold" id="pdfDownloadBtn" style="display:none;">⬇ PDFダウンロード</button>
+      </div>
+    </div>
+    <div class="output-content" id="outputContent"></div>
+    <div class="usage-info" id="usageInfo"></div>
+  </div>
+
+</main>
+
+<footer>
+  <p>コンテンツ変換スタジオ &nbsp;|&nbsp; <span>秋田式メソッド / peace-method</span> &nbsp;|&nbsp; Powered by Claude AI</p>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── State ───
+  let selectedFormat = null;
+  let selectedTone = 'professional';
+  let selectedLength = 'medium';
+  let rawOutputText = '';
+  let apiBodyOpen = true;
+
+  const SERVER_URL = 'http://localhost:3000';
+
+  // ─── DOM refs ───
+  const apiKeyInput    = document.getElementById('apiKeyInput');
+  const saveApiBtn     = document.getElementById('saveApiBtn');
+  const clearApiBtn    = document.getElementById('clearApiBtn');
+  const apiStatus      = document.getElementById('apiStatus');
+  const toggleVis      = document.getElementById('toggleVis');
+  const apiBody        = document.getElementById('apiBody');
+  const collapseBtn    = document.getElementById('collapseBtn');
+  const apiToggle      = document.getElementById('apiToggle');
+  const contentInput   = document.getElementById('contentInput');
+  const charCount      = document.getElementById('charCount');
+  const convertBtn     = document.getElementById('convertBtn');
+  const convertBtnText = document.getElementById('convertBtnText');
+  const errorBox       = document.getElementById('errorBox');
+  const outputSection  = document.getElementById('outputSection');
+  const outputContent  = document.getElementById('outputContent');
+  const usageInfo      = document.getElementById('usageInfo');
+  const copyBtn        = document.getElementById('copyBtn');
+  const pdfDownloadBtn = document.getElementById('pdfDownloadBtn');
+  const toast          = document.getElementById('toast');
+
+  // ─── Init ───
+  function init() {
+    const saved = localStorage.getItem('fx_studio_api_key');
+    if (saved) {
+      apiKeyInput.value = saved;
+      setApiSaved(true);
+      // Auto-collapse if key already saved
+      collapseApiBody(true);
+    }
+
+    // Pre-select first format
+    document.querySelector('.format-card[data-format="video"]').click();
+  }
+
+  // ─── API key UI ───
+  function setApiSaved(isSaved) {
+    if (isSaved) {
+      apiStatus.textContent = '保存済み ✓';
+      apiStatus.className = 'api-status saved';
+      clearApiBtn.style.display = '';
+    } else {
+      apiStatus.textContent = '未設定';
+      apiStatus.className = 'api-status not-saved';
+      clearApiBtn.style.display = 'none';
+    }
+  }
+
+  function collapseApiBody(collapsed) {
+    apiBodyOpen = !collapsed;
+    apiBody.classList.toggle('hidden', collapsed);
+    collapseBtn.textContent = collapsed ? '▼ 開く' : '▲ 閉じる';
+  }
+
+  apiToggle.addEventListener('click', (e) => {
+    if (e.target === saveApiBtn || e.target === clearApiBtn || e.target === toggleVis) return;
+    collapseApiBody(apiBodyOpen);
+  });
+
+  saveApiBtn.addEventListener('click', () => {
+    const key = apiKeyInput.value.trim();
+    if (!key) { showError('APIキーを入力してください。'); return; }
+    if (!key.startsWith('sk-ant-')) {
+      showError('APIキーの形式が正しくありません（sk-ant- で始まるキーを入力してください）。');
+      return;
+    }
+    localStorage.setItem('fx_studio_api_key', key);
+    setApiSaved(true);
+    showToast('✓ APIキーを保存しました');
+    hideError();
+    collapseApiBody(true);
+  });
+
+  clearApiBtn.addEventListener('click', () => {
+    localStorage.removeItem('fx_studio_api_key');
+    apiKeyInput.value = '';
+    setApiSaved(false);
+    showToast('APIキーを削除しました');
+  });
+
+  toggleVis.addEventListener('click', () => {
+    const isPass = apiKeyInput.type === 'password';
+    apiKeyInput.type = isPass ? 'text' : 'password';
+    toggleVis.textContent = isPass ? '🔒' : '👁';
+  });
+
+  // ─── Char count ───
+  contentInput.addEventListener('input', () => {
+    const len = contentInput.value.length;
+    charCount.textContent = `${len.toLocaleString()} 文字`;
+    charCount.className = 'char-count' + (len > 8000 ? ' over' : len > 5000 ? ' warn' : '');
+  });
+
+  // ─── Format selection ───
+  document.querySelectorAll('.format-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.format-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedFormat = card.dataset.format;
+    });
+  });
+
+  // ─── Tone selection ───
+  document.getElementById('toneBtns').addEventListener('click', (e) => {
+    if (!e.target.matches('.opt-btn')) return;
+    document.querySelectorAll('#toneBtns .opt-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    selectedTone = e.target.dataset.tone;
+  });
+
+  // ─── Length selection ───
+  document.getElementById('lengthBtns').addEventListener('click', (e) => {
+    if (!e.target.matches('.opt-btn')) return;
+    document.querySelectorAll('#lengthBtns .opt-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    selectedLength = e.target.dataset.length;
+  });
+
+  // ─── Convert ───
+  convertBtn.addEventListener('click', async () => {
+    hideError();
+
+    const apiKey = localStorage.getItem('fx_studio_api_key') || apiKeyInput.value.trim();
+    if (!apiKey) {
+      showError('APIキーが設定されていません。画面上部でAPIキーを入力・保存してください。');
+      return;
+    }
+    const content = contentInput.value.trim();
+    if (!content) {
+      showError('変換するコンテンツを入力してください。');
+      return;
+    }
+    if (!selectedFormat) {
+      showError('変換フォーマットを選択してください。');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${SERVER_URL}/api/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          format: selectedFormat,
+          tone: selectedTone,
+          length: selectedLength,
+          apiKey
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || `サーバーエラー (${res.status})`);
+      }
+
+      rawOutputText = data.result;
+      displayOutput(data.result, data.usage);
+
+    } catch (err) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        showError(
+          'サーバーに接続できません。\n' +
+          '以下を確認してください：\n' +
+          '① ターミナルで「node server.js」が実行中か\n' +
+          '② http://localhost:3000 が起動しているか'
+        );
+      } else {
+        showError(err.message || '予期しないエラーが発生しました。');
+      }
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function setLoading(loading) {
+    convertBtn.disabled = loading;
+    convertBtnText.innerHTML = loading
+      ? '<span class="spinner"></span>&nbsp; 変換中...'
+      : '✦ コンテンツを変換する';
+  }
+
+  // ─── Display output ───
+  function displayOutput(text, usage) {
+    outputSection.classList.add('visible');
+
+    const isPdf = selectedFormat === 'pdf';
+    const isMarkdownFormat = ['pdf', 'seminar', 'sns'].includes(selectedFormat);
+
+    if (isMarkdownFormat) {
+      outputContent.classList.add('rendered');
+      outputContent.innerHTML = marked.parse(text);
+    } else {
+      outputContent.classList.remove('rendered');
+      outputContent.textContent = text;
+    }
+
+    // PDF button visibility
+    pdfDownloadBtn.style.display = isPdf ? '' : 'none';
+
+    // Usage info
+    if (usage) {
+      usageInfo.textContent =
+        `入力トークン: ${usage.input_tokens.toLocaleString()} | ` +
+        `出力トークン: ${usage.output_tokens.toLocaleString()}`;
+    }
+
+    // Scroll to output
+    setTimeout(() => {
+      outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  // ─── Copy ───
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(rawOutputText);
+      showToast('✓ コピーしました！');
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = rawOutputText;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('✓ コピーしました！');
+    }
+  });
+
+  // ─── PDF Download ───
+  pdfDownloadBtn.addEventListener('click', () => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      // jsPDF doesn't natively support Japanese with default fonts.
+      // We output a clean text-only version with latin encoding note.
+      const pageWidth  = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin     = 18;
+      const maxWidth   = pageWidth - margin * 2;
+      let y = margin;
+
+      doc.setFont('helvetica', 'normal');
+
+      // Title
+      doc.setFontSize(16);
+      doc.setTextColor(245, 158, 11);
+      doc.text('Contents Conversion Studio', margin, y);
+      y += 8;
+
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text('Akita Method / peace-method | ' + new Date().toLocaleDateString('ja-JP'), margin, y);
+      y += 10;
+
+      // Divider line
+      doc.setDrawColor(45, 63, 94);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 8;
+
+      // Body text - strip markdown, keep readable
+      doc.setFontSize(10);
+      doc.setTextColor(241, 245, 249);
+
+      const lines = rawOutputText.split('\n');
+      for (const line of lines) {
+        if (y > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        // Basic markdown stripping
+        const clean = line
+          .replace(/^#{1,6}\s+/, '')
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/`(.*?)`/g, '$1')
+          .replace(/^[-*]\s+/, '・ ')
+          .replace(/^\d+\.\s+/, (m) => m);
+
+        if (clean.trim() === '') {
+          y += 4;
+          continue;
+        }
+
+        const wrapped = doc.splitTextToSize(clean, maxWidth);
+        for (const wl of wrapped) {
+          if (y > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(wl, margin, y);
+          y += 6;
+        }
+      }
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(100, 116, 139);
+        doc.text(
+          `Page ${i} / ${pageCount} | コンテンツ変換スタジオ`,
+          pageWidth / 2,
+          pageHeight - 8,
+          { align: 'center' }
+        );
+      }
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      doc.save(`akita-method-content-${dateStr}.pdf`);
+      showToast('✓ PDFをダウンロードしました');
+
+    } catch (err) {
+      showError('PDFの生成に失敗しました: ' + err.message);
+    }
+  });
+
+  // ─── Helpers ───
+  function showError(msg) {
+    errorBox.style.display = 'flex';
+    errorBox.textContent = msg;
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function hideError() {
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+
+  // ─── Start ───
+  init();
+</script>
+</body>
+</html>
