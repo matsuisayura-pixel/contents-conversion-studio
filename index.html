@@ -1021,12 +1021,15 @@
     urlFetchStatus.textContent = msg;
   }
 
+  let serverKeyConfigured = false;
+
   // ─── Init ───
   async function init() {
     // サーバーにAPIキーが設定されているか確認
     try {
       const cfg = await fetch('/api/config').then(r => r.json());
-      if (cfg.serverKeyConfigured) {
+      serverKeyConfigured = !!cfg.serverKeyConfigured;
+      if (serverKeyConfigured) {
         // サーバーキーあり → APIキーセクション全体を非表示
         document.getElementById('apiSection').style.display = 'none';
       } else {
@@ -1149,8 +1152,8 @@
     hideError();
 
     const isMock = document.getElementById('mockModeCheck').checked;
-    const apiKey = isMock ? 'mock' : (localStorage.getItem('fx_studio_api_key') || apiKeyInput.value.trim());
-    if (!isMock && !apiKey) {
+    const apiKey = isMock ? 'mock' : (localStorage.getItem('fx_studio_api_key') || apiKeyInput.value.trim() || '');
+    if (!isMock && !apiKey && !serverKeyConfigured) {
       showError('APIキーが設定されていません。画面上部でAPIキーを入力・保存するか、モックモードを有効にしてください。');
       return;
     }
