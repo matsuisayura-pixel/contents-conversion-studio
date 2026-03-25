@@ -401,6 +401,62 @@
       color: var(--accent-gold);
     }
 
+    /* ─── URL Fetch Box ─── */
+    .url-fetch-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 4px;
+    }
+    .url-fetch-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-gold);
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+    }
+    .url-fetch-row {
+      display: flex;
+      gap: 10px;
+    }
+    .url-fetch-row input[type="url"] {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .url-fetch-row input[type="url"]:focus { border-color: var(--accent-gold); }
+    .url-fetch-btn { white-space: nowrap; padding: 9px 20px; font-size: 0.85rem; }
+    .url-types {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .url-type-badge {
+      font-size: 0.68rem;
+      padding: 3px 10px;
+      background: rgba(148,163,184,0.08);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-secondary);
+    }
+    .url-fetch-status {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      min-height: 20px;
+    }
+    .url-fetch-status.loading { color: var(--accent-gold); }
+    .url-fetch-status.success { color: var(--success); }
+    .url-fetch-status.error   { color: var(--error); }
+
     /* ─── Convert button ─── */
     .convert-section {
       display: flex;
@@ -610,7 +666,7 @@
         <h2>APIキー設定</h2>
         <span class="api-status not-saved" id="apiStatus">未設定</span>
       </div>
-      <button class="collapse-btn" id="collapseBtn">▲ 閉じる</button>
+      <button class="collapse-btn" id="collapseBtn" style="display:none;">▲ 閉じる</button>
     </div>
 
     <div class="api-body" id="apiBody">
@@ -627,14 +683,54 @@
         ※ APIキーはお使いのブラウザ（localStorage）にのみ保存されます。サーバーには送信されません。<br>
         ※ セキュリティのためローカル環境（localhost）でのご利用を推奨します。
       </p>
+      <div class="divider" style="margin: 14px 0 12px;"></div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem; color:var(--text-secondary);">
+          <input type="checkbox" id="mockModeCheck" style="width:16px;height:16px;accent-color:var(--accent-gold);cursor:pointer;" />
+          <span>モックモードで動作確認（APIキー不要・サンプル出力）</span>
+        </label>
+      </div>
     </div>
   </div>
 
   <!-- ② コンテンツ入力 -->
   <div class="section-card">
     <div class="section-title">コンテンツ入力</div>
+
+    <!-- URL読み込み -->
+    <div class="url-fetch-box">
+      <div class="url-fetch-label">🔗 URLから読み込む　<span style="font-weight:400; font-size:0.72rem; color:var(--text-muted);">ISBNの直接入力も可</span></div>
+      <div class="url-fetch-row">
+        <input type="url" id="urlInput" placeholder="URL または ISBN（例: 9784xxxxxxxxx）を入力" />
+        <button class="btn btn-gold url-fetch-btn" id="fetchUrlBtn">読み込む</button>
+        <button class="btn btn-ghost url-fetch-btn" id="appendUrlBtn" title="既存のテキストに追加">＋追加</button>
+      </div>
+      <div id="sourceList" style="display:none; margin-top:10px;">
+        <div style="font-size:0.72rem; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">読み込み済みソース</div>
+        <div id="sourceItems" style="display:flex; flex-direction:column; gap:4px;"></div>
+      </div>
+      <div class="pdf-page-range" id="pdfPageRange" style="display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">📄 PDFページ指定（任意）:</span>
+        <input type="number" id="startPage" placeholder="開始ページ" min="1"
+          style="width:110px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px; color:var(--text-primary); font-size:0.82rem; outline:none;" />
+        <span style="font-size:0.8rem; color:var(--text-muted);">〜</span>
+        <input type="number" id="endPage" placeholder="終了ページ" min="1"
+          style="width:110px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px; color:var(--text-primary); font-size:0.82rem; outline:none;" />
+        <span id="totalPagesInfo" style="font-size:0.72rem; color:var(--text-muted);"></span>
+      </div>
+      <div class="url-types" style="margin-top:10px;">
+        <span class="url-type-badge">🌐 Webページ</span>
+        <span class="url-type-badge">📹 YouTube</span>
+        <span class="url-type-badge">📄 PDF</span>
+        <span class="url-type-badge">📚 書籍（ISBN / Amazon URL）</span>
+      </div>
+      <div class="url-fetch-status" id="urlFetchStatus"></div>
+    </div>
+
+    <div class="divider" style="margin: 16px 0 14px;"></div>
+
     <div class="char-info">
-      <p style="font-size:0.78rem; color:var(--text-secondary);">変換したい元コンテンツを貼り付けてください</p>
+      <p style="font-size:0.78rem; color:var(--text-secondary);">または直接テキストを貼り付け</p>
       <span class="char-count" id="charCount">0 文字</span>
     </div>
     <textarea
@@ -710,7 +806,44 @@
     </div>
   </div>
 
-  <!-- ⑤ 変換ボタン -->
+  <!-- ⑤ 詳細指示 -->
+  <div class="section-card">
+    <div class="section-title" style="cursor:pointer; user-select:none;" id="detailToggle">
+      詳細指示（任意）
+      <span id="detailToggleIcon" style="margin-left:auto; font-size:0.7rem; color:var(--text-muted); font-weight:400; letter-spacing:0;">▼ 開く</span>
+    </div>
+    <div id="detailBody" style="display:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">🎯 ターゲット読者</label>
+          <input type="text" id="targetAudience" placeholder="例：FX初心者・30代会社員・副業志望者"
+            style="width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; color:var(--text-primary); font-size:0.85rem; font-family:inherit; outline:none;" />
+        </div>
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">📌 強調したいポイント</label>
+          <input type="text" id="emphasisPoints" placeholder="例：リスク管理の重要性・初心者でも再現できる"
+            style="width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; color:var(--text-primary); font-size:0.85rem; font-family:inherit; outline:none;" />
+        </div>
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">🚫 除外・省略したい内容</label>
+          <input type="text" id="excludePoints" placeholder="例：専門用語・上級者向けの手法"
+            style="width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; color:var(--text-primary); font-size:0.85rem; font-family:inherit; outline:none;" />
+        </div>
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">🔑 必ず含めるキーワード</label>
+          <input type="text" id="keywords" placeholder="例：秋田式メソッド・peace-method・放置トレード"
+            style="width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; color:var(--text-primary); font-size:0.85rem; font-family:inherit; outline:none;" />
+        </div>
+      </div>
+      <div>
+        <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">✏️ その他の自由指示</label>
+        <textarea id="customInstruction" placeholder="例：&#10;・書籍の第3章（エントリー手法）を中心に変換してください&#10;・具体的な数字や事例を必ず入れてください&#10;・視聴者への問いかけを各セクションに入れてください"
+          style="width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--text-primary); font-size:0.85rem; font-family:inherit; resize:vertical; min-height:90px; outline:none; line-height:1.6;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ 変換ボタン -->
   <div class="convert-section">
     <button class="btn btn-gold btn-convert" id="convertBtn">
       <span id="convertBtnText">✦ コンテンツを変換する</span>
@@ -734,7 +867,10 @@
       </div>
     </div>
     <div class="output-content" id="outputContent"></div>
-    <div class="usage-info" id="usageInfo"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:6px;">
+      <span id="outputCharCount" style="font-size:0.72rem; color:var(--text-secondary);"></span>
+      <div class="usage-info" id="usageInfo"></div>
+    </div>
   </div>
 
 </main>
@@ -776,15 +912,138 @@
   const copyBtn        = document.getElementById('copyBtn');
   const pdfDownloadBtn = document.getElementById('pdfDownloadBtn');
   const toast          = document.getElementById('toast');
+  const urlInput       = document.getElementById('urlInput');
+  const fetchUrlBtn    = document.getElementById('fetchUrlBtn');
+  const appendUrlBtn   = document.getElementById('appendUrlBtn');
+  const urlFetchStatus = document.getElementById('urlFetchStatus');
+  const startPageInput = document.getElementById('startPage');
+  const endPageInput   = document.getElementById('endPage');
+  const totalPagesInfo = document.getElementById('totalPagesInfo');
+  const sourceList     = document.getElementById('sourceList');
+  const sourceItems    = document.getElementById('sourceItems');
+
+  let loadedSources = []; // { title, text } の配列
+
+  function addSource(title, text) {
+    loadedSources.push({ title, text });
+    renderSourceList();
+  }
+
+  function renderSourceList() {
+    if (loadedSources.length === 0) {
+      sourceList.style.display = 'none';
+      return;
+    }
+    sourceList.style.display = '';
+    sourceItems.innerHTML = '';
+    loadedSources.forEach((src, i) => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex; align-items:center; gap:8px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; padding:6px 10px;';
+      item.innerHTML = `
+        <span style="font-size:0.75rem; color:var(--accent-gold); flex-shrink:0;">#${i+1}</span>
+        <span style="font-size:0.75rem; color:var(--text-secondary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${src.title}</span>
+        <span style="font-size:0.7rem; color:var(--text-muted); flex-shrink:0;">${src.text.length.toLocaleString()}文字</span>
+        <button onclick="removeSource(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:14px;padding:0 2px;flex-shrink:0;" title="削除">✕</button>
+      `;
+      sourceItems.appendChild(item);
+    });
+  }
+
+  window.removeSource = function(i) {
+    loadedSources.splice(i, 1);
+    rebuildContent();
+    renderSourceList();
+  };
+
+  function rebuildContent() {
+    if (loadedSources.length === 0) {
+      contentInput.value = '';
+    } else {
+      contentInput.value = loadedSources
+        .map((s, i) => `【ソース${i+1}：${s.title}】\n${s.text}`)
+        .join('\n\n---\n\n');
+    }
+    const len = contentInput.value.length;
+    charCount.textContent = `${len.toLocaleString()} 文字`;
+    charCount.className = 'char-count' + (len > 8000 ? ' over' : len > 5000 ? ' warn' : '');
+  }
+
+  // ─── URL読み込み ───
+  async function doFetch(append) {
+    const url = urlInput.value.trim();
+    if (!url) { setUrlStatus('error', 'URLを入力してください。'); return; }
+    fetchUrlBtn.disabled = true;
+    appendUrlBtn.disabled = true;
+    setUrlStatus('loading', '⏳ 読み込み中...');
+    try {
+      const body = { url };
+      if (startPageInput.value) body.startPage = parseInt(startPageInput.value);
+      if (endPageInput.value)   body.endPage   = parseInt(endPageInput.value);
+
+      const res = await fetch('/api/fetch-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) { setUrlStatus('error', '❌ ' + data.error); return; }
+
+      if (data.totalPages) totalPagesInfo.textContent = `全${data.totalPages}ページ`;
+
+      if (append) {
+        addSource(data.title, data.text);
+        rebuildContent();
+        setUrlStatus('success', `✅ 追加完了：${data.title}（${data.text.length.toLocaleString()}文字）　合計 ${loadedSources.length}ソース`);
+      } else {
+        loadedSources = [];
+        addSource(data.title, data.text);
+        rebuildContent();
+        setUrlStatus('success', `✅ 読み込み完了：${data.title}（${data.text.length.toLocaleString()}文字）`);
+      }
+      urlInput.value = '';
+      startPageInput.value = '';
+      endPageInput.value = '';
+    } catch (e) {
+      setUrlStatus('error', '❌ 通信エラーが発生しました。');
+    } finally {
+      fetchUrlBtn.disabled = false;
+      appendUrlBtn.disabled = false;
+    }
+  }
+
+  fetchUrlBtn.addEventListener('click', () => doFetch(false));
+  appendUrlBtn.addEventListener('click', () => doFetch(true));
+
+  urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') doFetch(false); });
+
+  function setUrlStatus(type, msg) {
+    urlFetchStatus.className = 'url-fetch-status ' + type;
+    urlFetchStatus.textContent = msg;
+  }
 
   // ─── Init ───
-  function init() {
-    const saved = localStorage.getItem('fx_studio_api_key');
-    if (saved) {
-      apiKeyInput.value = saved;
-      setApiSaved(true);
-      // Auto-collapse if key already saved
-      collapseApiBody(true);
+  async function init() {
+    // サーバーにAPIキーが設定されているか確認
+    try {
+      const cfg = await fetch('/api/config').then(r => r.json());
+      if (cfg.serverKeyConfigured) {
+        // サーバーキーあり → APIキーセクション全体を非表示
+        document.getElementById('apiSection').style.display = 'none';
+      } else {
+        // サーバーキーなし → ローカルのキーを読み込む
+        const saved = localStorage.getItem('fx_studio_api_key');
+        if (saved) {
+          apiKeyInput.value = saved;
+          setApiSaved(true);
+          collapseApiBody(true);
+        }
+        collapseBtn.style.display = '';
+      }
+    } catch (e) {
+      // 取得失敗時はローカルキーを使う
+      const saved = localStorage.getItem('fx_studio_api_key');
+      if (saved) { apiKeyInput.value = saved; setApiSaved(true); collapseApiBody(true); }
+      collapseBtn.style.display = '';
     }
 
     // Pre-select first format
@@ -874,15 +1133,36 @@
     selectedLength = e.target.dataset.length;
   });
 
+  // ─── 詳細指示パネル開閉 ───
+  const detailToggle = document.getElementById('detailToggle');
+  const detailBody   = document.getElementById('detailBody');
+  const detailToggleIcon = document.getElementById('detailToggleIcon');
+  let detailOpen = false;
+  detailToggle.addEventListener('click', () => {
+    detailOpen = !detailOpen;
+    detailBody.style.display = detailOpen ? '' : 'none';
+    detailToggleIcon.textContent = detailOpen ? '▲ 閉じる' : '▼ 開く';
+  });
+
   // ─── Convert ───
   convertBtn.addEventListener('click', async () => {
     hideError();
 
-    const apiKey = localStorage.getItem('fx_studio_api_key') || apiKeyInput.value.trim();
-    if (!apiKey) {
-      showError('APIキーが設定されていません。画面上部でAPIキーを入力・保存してください。');
+    const isMock = document.getElementById('mockModeCheck').checked;
+    const apiKey = isMock ? 'mock' : (localStorage.getItem('fx_studio_api_key') || apiKeyInput.value.trim());
+    if (!isMock && !apiKey) {
+      showError('APIキーが設定されていません。画面上部でAPIキーを入力・保存するか、モックモードを有効にしてください。');
       return;
     }
+
+    // 詳細指示を収集
+    const detailInstruction = {
+      targetAudience:    document.getElementById('targetAudience').value.trim(),
+      emphasisPoints:    document.getElementById('emphasisPoints').value.trim(),
+      excludePoints:     document.getElementById('excludePoints').value.trim(),
+      keywords:          document.getElementById('keywords').value.trim(),
+      customInstruction: document.getElementById('customInstruction').value.trim(),
+    };
     const content = contentInput.value.trim();
     if (!content) {
       showError('変換するコンテンツを入力してください。');
@@ -904,7 +1184,8 @@
           format: selectedFormat,
           tone: selectedTone,
           length: selectedLength,
-          apiKey
+          apiKey,
+          detailInstruction
         })
       });
 
@@ -915,7 +1196,7 @@
       }
 
       rawOutputText = data.result;
-      displayOutput(data.result, data.usage);
+      displayOutput(data.result, data.usage, data.mock);
 
     } catch (err) {
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
@@ -941,7 +1222,16 @@
   }
 
   // ─── Display output ───
-  function displayOutput(text, usage) {
+  const FORMAT_LENGTH_GUIDE = {
+    video:   { short: '約2,000文字（5〜6分）', medium: '約3,500文字（10分）', long: '約6,000文字（15〜20分）' },
+    audio:   { short: '約2,000文字（5〜6分）', medium: '約3,500文字（10分）', long: '約6,000文字（15〜20分）' },
+    pdf:     { short: '約1,000〜1,500文字',    medium: '約2,000〜3,000文字',  long: '約4,000〜5,000文字' },
+    sns:     { short: '各1パターン',            medium: '各2〜3パターン',      long: '各3パターン' },
+    email:   { short: '約500〜800文字',         medium: '約1,000〜1,500文字',  long: '約2,000文字' },
+    seminar: { short: '8〜10枚',               medium: '12〜15枚',            long: '約20枚' }
+  };
+
+  function displayOutput(text, usage, isMock) {
     outputSection.classList.add('visible');
 
     const isPdf = selectedFormat === 'pdf';
@@ -958,8 +1248,22 @@
     // PDF button visibility
     pdfDownloadBtn.style.display = isPdf ? '' : 'none';
 
+    // 出力文字カウント
+    const charLen = text.length;
+    const outputCharCount = document.getElementById('outputCharCount');
+    if (isMock) {
+      outputCharCount.textContent = `出力文字数: ${charLen.toLocaleString()}文字　｜　※モックは固定サンプルのため長さ指定は反映されません`;
+    } else {
+      const guide = FORMAT_LENGTH_GUIDE[selectedFormat]?.[selectedLength] || '';
+      outputCharCount.textContent = `出力文字数: ${charLen.toLocaleString()}文字　｜　目安: ${guide}`;
+    }
+
     // Usage info
-    if (usage) {
+    if (isMock) {
+      usageInfo.textContent = '🔶 モックモード（サンプル出力）';
+      usageInfo.style.color = 'var(--accent-gold)';
+    } else if (usage) {
+      usageInfo.style.color = '';
       usageInfo.textContent =
         `入力トークン: ${usage.input_tokens.toLocaleString()} | ` +
         `出力トークン: ${usage.output_tokens.toLocaleString()}`;

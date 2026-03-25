@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: contents-conversion-studio
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # Renderのダッシュボードで手動設定
+      - key: PORT
+        value: 10000
